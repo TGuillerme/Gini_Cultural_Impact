@@ -16,8 +16,6 @@ match.data <- function(variables, tree, ginis, year, ...) {
     matching <- match(ginis$year, year)
     no_matching <- which(is.na(matching))
     ginis_out <- ginis[-no_matching,]
-    rownames(ginis_out) <- ginis_out[,1]
-    ginis_out <- ginis[,3]
 
     #Getting the list of countries
     countries_out <- as.character(ginis_out$country)
@@ -30,7 +28,7 @@ match.data <- function(variables, tree, ginis, year, ...) {
     #Creating the distance matrix
     long_lat <- variables_out[!duplicated(variables_out[,1:4]), 3:4]
     row.names(long_lat) <- as.character(variables_out[!duplicated(variables_out[,1:4]), 1])
-    capital_distances <- geodesic.matrix(long_lat, ...)
+    capital_distances <- geodesic.matrix(long_lat)
 
     #Creating the sub_language tree
     tree.match <- function(tree, variables) {
