@@ -123,6 +123,3 @@ counts_per_year <- count(sub_ginis$year)
 head(counts_per_year[with(counts_per_year, order(-freq)),] )
 # Let's just select the year 2005 for now that has 71 countries
 
-
-ginis_2005 <- match.data(sub_variables, tree, sub_ginis, 2005)
-
