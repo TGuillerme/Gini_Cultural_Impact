@@ -1,25 +1,23 @@
-library(plyr)
-library(geosphere)
+if(!require(plyr)) install.packages("plyr")
+if(!require(geosphere)) install.packages("geosphere")
+library(plyr); library(geosphere)
 source("Function/geodesic.matrix.R")
 source("Function/match.data.R")
 
 ## Data input script
 
+######################
+## Get the countries variables
+######################
+country_variables <- read.csv("../Data/Country_variables.csv", stringsAsFactors = FALSE)
+
 
 ######################
 ## Get the Gini index
 ######################
-ginis <- read.csv("../Data/Gini_index.csv")
+ginis <- read.csv("../Data/Gini_index.csv", stringsAsFactors = FALSE)
 ## Remove the NAs
 ginis <- ginis[-which(is.na(ginis$Gini)),]
-
-## Selecting the years with the most ginis (i.e. the most countries)
-counts_per_year <- count(ginis$year)
-head(counts_per_year[with(counts_per_year, order(-freq)),] )
-
-## We'll have to chose the best strategy for getting this analysis through time going...
-## For now, I'll just chose the year 2005 since it has the most data.class
-ginis_2005 <- ginis[which(ginis$year == 2005),]
 
 ######################
 ## Get the language tree
@@ -82,44 +80,28 @@ tree[[1]]$tip.label[match("Riksmal",tree[[1]]$tip.label)] <- tree[[2]]$tip.label
 # Renaming Byelorussian to Belarussian
 tree[[1]]$tip.label[match("Byelorussian",tree[[1]]$tip.label)] <- tree[[2]]$tip.label[match("Byelorussian",tree[[2]]$tip.label)] <- "Belarussian"
 
-
-
 #Extracting the languages
-languages <- tree[[1]]$tip.label         
-
-
-
-######################
-## Get the Countries variable
-######################
-variables <- read.csv("../Data/Country_variables.csv")
-#long_lat <- variables[!duplicated(variables[,1:4]), 3:4]
-#row.names(long_lat) <- as.character(variables[!duplicated(variables[,1:4]), 1])
-
-## Creating the country distance matrix (in meters) (takes approx 10 sec)
-#capital_distances <- geodesic.matrix(long_lat)
+languages <- tree[[1]]$tip.label
 
 #####################
-# Create the most complete dataset
+# Create the most complete dataset (countries with gini + language + captial)
 #####################
 
-# 1 - Select the countries with both language and capital distance
-matching <- match(variables[,5], languages)
-no_matching <- which(is.na(matching))
-sub_variables <- variables[-no_matching,]
+# 1 - Get the countries that have a language represented in the tree
+countries_language <- country_variables[-which(is.na(match(country_variables[,5], languages))), ]$Country
 
-# 2 - From these countries, select only the countries with ginis
-matching <- match(as.character(sub_variables[,1]), levels(ginis[,1]))
-no_matching <- which(is.na(matching))
-sub_variables <- sub_variables[-no_matching,]
-# Ending up with 144 countries
-list_of_countries <- as.character(unique(sub_variables[,1]))
+# 2 - Select the which of these countries have gini indices
+ginis_language <- ginis[-which(is.na(match(ginis[,1], countries_language))), ]
+countries_language_gini <- unique(ginis_language$country)
 
-# 3 - Select the years with the most ginis for these countries
-matching <- match(as.character(ginis[,1]), list_of_countries)
-no_matching <- which(is.na(matching))
-sub_ginis <- ginis[-no_matching,]
-counts_per_year <- count(sub_ginis$year)
-head(counts_per_year[with(counts_per_year, order(-freq)),] )
-# Let's just select the year 2005 for now that has 71 countries
+# 3 - Find the year with the most ginis indices for these countries
+counts_per_year <- count(ginis_language$year)
+year_with_most_data <- head(counts_per_year[with(counts_per_year, order(-freq)),] )[1,1]
 
+# 4 - Out put the saved data
+# Select the ginis for that year
+gini_indices <- ginis_language[which(ginis_language$year == year_with_most_data),]
+# Add the languages to the data
+gini_indices$language <- unlist(lapply(as.list(gini_indices$country), match.country.language, country_variables[,c(1,5)], languages))
+
+cat(paste(head(counts_per_year[with(counts_per_year, order(-freq)),] )[1,2], "gini indices saved for the year", year_with_most_data, "in 'gini_indices'"))

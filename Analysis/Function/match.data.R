@@ -44,6 +44,19 @@ match.data <- function(variables, tree, ginis, year, ...) {
         tree_out <- tree.match(tree, variables = sub_variables[,5])
     }
 
+    #Getting the language for each country saved
+
+
+    # Select the ginis for that year
+    gini_indices <- ginis_language[which(ginis_language$year == year_with_most_data),]
+    # Add the languages to the data
+    gini_indices$language <- unlist(lapply(as.list(gini_indices$country), match.country.language, country_variables[,c(1,5)], languages))
+
+    cat(paste(head(counts_per_year[with(counts_per_year, order(-freq)),] )[1,2], "gini indices saved for the year", year_with_most_data, "in 'gini_indices'"))
+
+
+
+
     #Results output
     list_out <- list(ginis_out, capital_distances, tree_out)
     names(list_out) <- c(paste("Ginis_", year, sep=""), "Capital_distances", "Language_tree")
